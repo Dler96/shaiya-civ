@@ -1,0 +1,119 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Borderland Eternal - Alliance of Light vs Union of Fury</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0f1117;color:#e8e9ee;font:15px Segoe UI,system-ui,sans-serif}
+header{padding:16px 20px 6px;max-width:1300px;margin:auto}nav{display:flex;gap:16px;flex-wrap:wrap;font-size:14px}nav a{color:#8fb4ff;text-decoration:none}nav b{color:#e8e9ee}
+h1{margin:10px 0 2px;font-size:28px}.sub{color:#9aa3b5;font-size:14px}
+main{max-width:1300px;margin:auto;padding:8px 20px 40px}
+.score{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center;margin:16px 0}
+.side{border-radius:14px;padding:16px 18px;border:1px solid #252a37}.side.L{background:linear-gradient(160deg,#14233f,#161922)}.side.F{background:linear-gradient(200deg,#3a1616,#161922);text-align:right}
+.side h2{margin:0;font-size:20px}.L h2{color:#6fa0ff}.F h2{color:#ff6a5a}.big{font-size:40px;font-weight:800;margin:4px 0}.m{color:#9aa3b5;font-size:13px}
+.vs{font-size:22px;font-weight:800;color:#f2c14e}
+.bar{height:12px;border-radius:6px;overflow:hidden;display:flex;margin:4px 0 18px;background:#20242f}.bar i{display:block}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+table{width:100%;border-collapse:collapse;background:#161922;border:1px solid #252a37;border-radius:10px;overflow:hidden}
+th,td{padding:7px 9px;border-bottom:1px solid #20242f;font-size:14px;text-align:left}th{color:#9aa3b5;background:#12151c;font-weight:600}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.hp{display:inline-block;width:60px;height:6px;background:#2a2f3c;border-radius:3px;vertical-align:middle}.hp i{display:block;height:100%;border-radius:3px;background:#4caf6a}
+.fl{display:inline-block;background:#2a2412;color:#f2c14e;border:1px solid #5a4a20;border-radius:6px;font-size:11px;font-weight:700;padding:0 6px;margin-left:5px}
+.off{opacity:.45}
+.kick{color:#f2c14e;font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-top:12px}
+.ttl{font-family:Georgia,'Times New Roman',serif;font-size:36px;margin:4px 0 4px;background:linear-gradient(90deg,#8fb4ff,#f2e7c8 50%,#ff7a6a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cap{font-family:Georgia,serif;font-style:italic;color:#d6cfbd;font-size:16px;margin-bottom:6px}.cap span{color:#f2c14e;font-style:normal;font-weight:700}
+@media(max-width:760px){.ttl{font-size:27px}.cap{font-size:14px}}
+#warban{position:sticky;top:0;z-index:50;background:linear-gradient(90deg,#7a0d0d,#c41616,#7a0d0d);color:#fff;text-align:center;font-weight:800;letter-spacing:.06em;padding:10px 12px;font-size:18px;box-shadow:0 3px 14px rgba(200,0,0,.45);text-transform:uppercase}
+#warban small{display:block;font-weight:600;font-size:12px;letter-spacing:.02em;text-transform:none;opacity:.9}
+@media(max-width:760px){.score{grid-template-columns:1fr}.side.F{text-align:left}.vs{text-align:center}.cols{grid-template-columns:1fr}.big{font-size:30px}}
+</style></head><body><div id="warban" style="display:none"></div>
+<header><nav><a href="./" id="mn">Menu</a><a href="strongest" id="st">Strongest of the Tower</a><b>War Board</b><a href="warcam.html" id="wc" style="color:#ff6a5a;font-weight:700">&#127909; Watch live: War Cam</a></nav>
+<div class="kick">Shaiya &middot; D-Water Borderland &middot; The First AI War &middot; <span style="color:#ff6a5a">No Cooldown</span></div><h1 class="ttl">&#9876;&#65039; The Borderland Eternal</h1>
+<div class="cap">Alliance of Light <span>vs</span> Union of Fury &mdash; 240 AI champions, born and raised in their own civilization, now at war inside the real game. One cursed borderland. No surrender.</div>
+<div class="sub" id="sub">The civilization's champions, fighting for real inside the game. Updates every 15 seconds.</div></header>
+<main>
+<div class="score"><div class="side L"><h2>Alliance of Light</h2><div class="big" id="lk">0</div><div class="m" id="lm"></div></div><div class="vs">VS</div>
+<div class="side F"><h2>Union of Fury</h2><div class="big" id="fk">0</div><div class="m" id="fm"></div></div></div>
+<div class="bar"><i id="lb" style="background:#4f8cff"></i><i id="fb" style="background:#ff5a4a"></i></div>
+<div class="cols"><div><h2 style="font-size:17px;color:#6fa0ff">Light champions</h2><table id="lt"></table></div>
+<div><h2 style="font-size:17px;color:#ff6a5a">Fury champions</h2><table id="ft"></table></div></div>
+</main>
+<script>
+const LOCAL=location.port==='8091'||location.hostname==='localhost'||location.hostname==='127.0.0.1';
+if(LOCAL){mn.href='/';st.href='/strongest';wc.href='/warcam'}
+const J=['Fighter','Defender','Ranger','Archer','Mage','Priest'],esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]),fmt=n=>(n||0).toLocaleString();
+function table(L){return '<tr><th>Champion</th><th class="n">Kills</th><th class="n">Deaths</th><th class="n">Hits</th><th>HP</th></tr>'+L.map(r=>`<tr class="${r.online?'':'off'}"><td><span class="dot" style="background:${r.online?'#4caf6a':'#555'}"></span><b>${esc(r.name)}</b><span class="fl">F${r.floor}</span><div class="m">${J[r.job]} · House ${esc(r.house)} · rating ${fmt(r.rating)}</div></td><td class="n" style="color:#f2c14e;font-weight:700">${r.kills}</td><td class="n">${r.deaths}</td><td class="n">${fmt(r.hits)}</td><td><span class="hp"><i style="width:${Math.max(0,Math.min(100,r.maxhp?100*r.hp/r.maxhp:0))}%"></i></span></td></tr>`).join('')}
+function draw(D){const S=[0,1].map(s=>D.champions.filter(r=>r.side===s));
+ const k=S.map(L=>L.reduce((a,r)=>a+r.kills,0)),d=S.map(L=>L.reduce((a,r)=>a+r.deaths,0)),on=S.map(L=>L.filter(r=>r.online).length);
+ lk.textContent=fmt(k[0])+' kills';fk.textContent=fmt(k[1])+' kills';
+ lm.textContent=`${on[0]} of ${S[0].length} on the field · ${fmt(d[0])} fallen`;fm.textContent=`${on[1]} of ${S[1].length} on the field · ${fmt(d[1])} fallen`;
+ const t=Math.max(1,k[0]+k[1]);lb.style.width=(100*k[0]/t)+'%';fb.style.width=(100*k[1]/t)+'%';
+ const srt=L=>L.sort((a,b)=>b.kills-a.kills||b.hits-a.hits);lt.innerHTML=table(srt(S[0]));ft.innerHTML=table(srt(S[1]));
+ sub.textContent=D.running?`The war is on. ${on[0]+on[1]} champions on the field. Updated ${new Date(D.t*1000).toLocaleTimeString()}.`:'The war is not running right now. Last results below.';}
+let W=null;function banner(){const b=document.getElementById('warban');if(!W||!W.starts_at){b.style.display='none';return}
+ const s=Math.round(W.starts_at-Date.now()/1000);b.style.display='block';
+ if(s>0){const m=Math.floor(s/60),x=String(s%60).padStart(2,'0');b.innerHTML=`The Borderland Eternal begins in ${m}:${x}<small>Alliance of Light vs Union of Fury · 240 champions · D-Water Borderland</small>`}
+ else b.innerHTML=W.running?'&#9876;&#65039; The Borderland Eternal rages<small>The first AI war · No Cooldown · Alliance of Light vs Union of Fury · log in to fight for the Light</small>':'The war is over<small>Final results below</small>'}
+setInterval(banner,1000);
+function load(){fetch(LOCAL?'/war.json':'war.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{W=d;banner();draw(d)}).catch(()=>sub.textContent='No war data yet.')}
+load();setInterval(load,15000);
+</script><a id="menubtn" href="index.html" style="position:fixed;right:14px;bottom:14px;z-index:99999;background:#151a28;border:1px solid #c9a54a;color:#f1dfa8;padding:8px 15px;border-radius:20px;font:600 14px Segoe UI,sans-serif;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.5)">&#9776; Menu</a><script>(function(){var H='index.html';function tag(){document.querySelectorAll('h1,h2').forEach(function(h){if(h.dataset.mb||h.closest('a,button,#menubtn,.no-menu'))return;h.dataset.mb=1;var a=document.createElement('a');a.href=H;a.className='secmenu';a.textContent='☰ Menu';h.appendChild(a)})}
+var s=document.createElement('style');s.textContent='.secmenu{display:inline-block;margin-left:12px;vertical-align:middle;font:600 11px Segoe UI,sans-serif;letter-spacing:.3px;color:#f1dfa8!important;background:#151a28;border:1px solid #c9a54a;border-radius:12px;padding:2px 9px;text-decoration:none!important;opacity:.75;text-transform:none}.secmenu:hover{opacity:1;background:#232a40}';document.head.appendChild(s);
+tag();var t=null;new MutationObserver(function(){clearTimeout(t);t=setTimeout(tag,150)}).observe(document.body,{childList:true,subtree:true})})();</script><style id="mfx">
+@media(max-width:760px){
+ body{overflow-wrap:break-word;-webkit-text-size-adjust:100%}
+ td,th{overflow-wrap:normal;word-break:normal}
+ img,video,canvas{max-width:100%;height:auto}
+ svg{max-width:100%;height:auto}
+ .mscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+ nav{flex-wrap:wrap;row-gap:6px}
+ .secmenu{display:none!important}
+ #menubtn,a[href][style*="position:fixed"][style*="bottom:14px"]{padding:6px 12px!important;font-size:13px!important;right:10px!important;bottom:10px!important}
+}
+.flpick{display:inline-flex;gap:6px;align-items:center;margin-left:auto}
+.flpick button,.flpick select{background:#20242f;color:#e8e9ee;border:1px solid #303648;border-radius:7px;padding:4px 8px;font:inherit;font-size:13px;cursor:pointer}
+.flpick button:disabled{opacity:.3;cursor:default}
+</style>
+<script>(function(){
+var W=function(){return window.innerWidth};
+function fit(){
+ if(W()>760)return;
+ document.querySelectorAll('table').forEach(function(t){
+  if(t.dataset.mw||t.closest('.mscroll'))return;var p=t.parentElement;if(!p)return;
+  var o=getComputedStyle(p).overflowX;if(o==='auto'||o==='scroll')return;
+  if(t.scrollWidth>p.clientWidth+2){var d=document.createElement('div');d.className='mscroll';p.insertBefore(d,t);d.appendChild(t);t.dataset.mw=1}});
+ document.querySelectorAll('body *').forEach(function(e){                       // grids squeezed into slivers: let them stack
+   if(e.closest('.mscroll,svg')||e.classList.contains('floors')||e.dataset.mg)return;
+   var cs=getComputedStyle(e);if(cs.display.indexOf('grid')<0)return;
+   var cols=cs.gridTemplateColumns.split(' ').filter(function(x){return x&&x!=='none'}).map(parseFloat);
+   if(cols.length<2)return;var mn=Math.min.apply(null,cols);
+   var heavy=e.querySelector('svg,table,canvas,img');
+   if(heavy&&mn<260){e.style.gridTemplateColumns='minmax(0,1fr)';e.dataset.mg=1}
+   else if(mn<110){e.style.gridTemplateColumns='repeat(auto-fit,minmax(min(100%,140px),1fr))';e.dataset.mg=1}});
+ for(var pass=0;pass<2;pass++){
+  document.querySelectorAll('body *').forEach(function(e){
+   if(e.closest('.mscroll,svg')||e.tagName==='TABLE'||e.tagName==='SCRIPT'||e.tagName==='STYLE')return;
+   var r=e.getBoundingClientRect();if(r.width<=W()+1)return;
+   var cs=getComputedStyle(e);
+   if(cs.position==='fixed')return;
+   if(cs.display.indexOf('grid')>=0)e.style.gridTemplateColumns='repeat(auto-fit,minmax(min(100%,150px),1fr))';
+   else if(cs.display.indexOf('flex')>=0)e.style.flexWrap='wrap';
+   if(e.tagName==='svg'||e.tagName==='SVG'){e.style.width='100%';e.style.height='auto'}
+   else{e.style.maxWidth='100%';e.style.minWidth='0';e.style.boxSizing='border-box'}});
+ }}
+function floors(){
+ var m=location.pathname.match(/\/floor\/(\d\d)\/([^\/]*)$/);
+ if(!m||document.getElementById('flsel')||document.querySelector('.flpick'))return;
+ var n=+m[1],page=m[2]||'',pad=function(k){return(k<10?'0':'')+k};
+ var s=document.createElement('span');s.className='flpick';
+ var o='';for(var k=1;k<=20;k++)o+='<option value="'+k+'"'+(k===n?' selected':'')+'>Floor '+k+'</option>';
+ s.innerHTML='<button aria-label="Previous floor"'+(n<=1?' disabled':'')+'>&larr;</button><select aria-label="Choose a floor">'+o+'</select><button aria-label="Next floor"'+(n>=20?' disabled':'')+'>&rarr;</button>';
+ var go=function(k){location.href='../'+pad(k)+'/'+page};
+ var b=s.querySelectorAll('button');b[0].onclick=function(){go(n-1)};b[1].onclick=function(){go(n+1)};s.querySelector('select').onchange=function(){go(+this.value)};
+ var nav=document.querySelector('nav');
+ if(nav){nav.style.display=nav.style.display||'flex';nav.style.flexWrap='wrap';nav.style.alignItems='center';nav.appendChild(s)}
+ else{var h=document.querySelector('h1');if(h)h.parentElement.insertBefore(s,h.nextSibling)}}
+function run(){try{floors()}catch(e){}try{fit()}catch(e){}}
+if(document.readyState!=='loading')run();else document.addEventListener('DOMContentLoaded',run);
+window.addEventListener('load',run);var t=null;
+new MutationObserver(function(){clearTimeout(t);t=setTimeout(function(){try{fit()}catch(e){}},300)}).observe(document.documentElement,{childList:true,subtree:true});
+window.addEventListener('resize',function(){clearTimeout(t);t=setTimeout(run,300)});
+})();</script></body></html>

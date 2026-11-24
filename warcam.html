@@ -1,0 +1,162 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>War Cam - The Borderland Eternal</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:#07090d;color:#e8e9ee;font:14px Segoe UI,system-ui,sans-serif;overflow:hidden}
+#stage{position:fixed;inset:0}canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.top{position:fixed;left:0;right:0;top:0;padding:10px 14px;background:linear-gradient(#07090dee,#07090d00);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;pointer-events:none}
+.top *{pointer-events:auto}.top a{color:#8fb4ff;text-decoration:none;font-size:13px}
+.ttl{font-family:Georgia,serif;font-size:20px;font-weight:700;background:linear-gradient(90deg,#8fb4ff,#f2e7c8 50%,#ff7a6a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.live{color:#ff4a4a;font-weight:800;font-size:12px;letter-spacing:.1em}.live:before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3030;margin-right:6px;animation:p 1.2s infinite}
+@keyframes p{50%{opacity:.25}}
+.score{font-weight:800;font-size:15px}.L{color:#6fa0ff}.F{color:#ff6a5a}
+.ctl{position:fixed;left:12px;bottom:12px;display:flex;gap:6px;flex-wrap:wrap}
+.ctl button{background:#161922e6;color:#e8e9ee;border:1px solid #303648;border-radius:8px;padding:8px 11px;font:inherit;font-size:13px;cursor:pointer}.ctl button.on{border-color:#f2c14e;color:#f2c14e}
+#feed{position:fixed;right:12px;top:62px;width:270px;display:flex;flex-direction:column;gap:4px;pointer-events:none}
+#feed div{background:#0e1016d9;border-left:3px solid #555;border-radius:6px;padding:5px 9px;font-size:12.5px;animation:in .4s}
+@keyframes in{from{opacity:0;transform:translateX(20px)}}
+#info{position:fixed;left:12px;top:62px;background:#0e1016e6;border:1px solid #303648;border-radius:10px;padding:10px 12px;min-width:220px;display:none}
+#cap{position:fixed;left:50%;bottom:58px;transform:translateX(-50%);background:#0e1016d0;border-radius:20px;padding:6px 14px;font-size:13px;color:#d6cfbd;white-space:nowrap}
+#menubtn,body>a[style*="position:fixed"]{display:none!important}
+@media(max-width:700px){#feed{width:62%;top:78px;right:8px}#feed div{font-size:11.5px;padding:3px 7px}#feed div:nth-child(n+4){display:none}.ttl{font-size:16px}#cap{bottom:96px;font-size:11.5px}.ctl button{padding:7px 9px;font-size:12px}#info{top:auto;bottom:130px}}
+</style></head><body>
+<div id="stage"><canvas id="cv"></canvas></div>
+<div class="top"><a href="./" id="mn">Menu</a><a href="war.html" id="wb">War Board</a><a href="realmchat.html" id="rc">Party Chat</a><span class="ttl">The Borderland Eternal</span><span class="live">LIVE</span>
+<span class="score"><span class="L" id="ls">0</span> <span style="color:#777">:</span> <span class="F" id="fs">0</span></span><span id="cnt" style="color:#9aa3b5;font-size:12px"></span></div>
+<div id="feed"></div><div id="info"></div><div id="cap">Auto camera: following the fiercest fighting</div>
+<div class="ctl"><button id="bAuto" class="on">&#127909; Auto camera</button><button id="bAll">&#128506;&#65039; Whole battle</button><button id="bMe">&#9876;&#65039; Find me</button><button id="bNames" class="on">Names</button><a id="bChat" href="realmchat.html" style="background:#2a1c3a;color:#e6d4ff;border:1px solid #6b4fa8;border-radius:8px;padding:8px 11px;font-size:13px;text-decoration:none">&#128172; Party Chat</a></div>
+<script>
+const LOCAL=location.port==='8091'||location.hostname==='localhost'||location.hostname==='127.0.0.1';
+if(LOCAL){mn.href='/';wb.href='/war';rc.href='/realmchat';bChat.href='/realmchat'}
+const J=['Fighter','Defender','Ranger','Archer','Mage','Priest'],esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+let S=2048,MAPID=-1;const map=new Image();const MB={45:[15.7,1017.6,32.3,1003.8],9:[-3.75,636.25,-39.2,916],10:[-0.43,555.5,-12,713.7]};let BX=[0,2048,0,2048];
+function setMap(m){if(m===MAPID)return;MAPID=m;S=(m==81||m==9||m==10||m==45)?1024:2048;BX=MB[m]||[0,S,0,S];document.querySelector('.ttl').textContent=m==45?'War in Deep Desert 1':m==10?'DD2 dungeon':m==9?'DD1 dungeon':m==81?'The Living Realm':'The Borderland Eternal';map.src=(LOCAL?'/floor/01/maps/':'maps/')+m+'.jpg'}setMap(0);
+const cv=document.getElementById('cv'),g=cv.getContext('2d');
+let D=null,dots={},cam={x:900,z:1320,s:4},want={x:900,z:1320,s:4},mode='auto',follow=null,names=true,lastFeed=0,spot=null,spotSince=0;
+function size(){cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio}addEventListener('resize',size);size();
+// world (x,z) -> screen; the map image: x to the right, z upward
+function sx(x){return (x-cam.x)*cam.s*devicePixelRatio+cv.width/2}
+function sy(z){return -(z-cam.z)*cam.s*devicePixelRatio+cv.height/2}
+function hot(list){                    // the fiercest fighting: the spot with most champions striking within 35 steps
+ let best=null;const A=list.filter(d=>d.atk);if(!A.length)return null;
+ for(const a of A){let n=0,sx_=0,sz_=0;for(const b of A){if(Math.hypot(a.x-b.x,a.z-b.z)<35){n++;sx_+=b.x;sz_+=b.z}}
+  if(!best||n>best.n)best={n,x:sx_/n,z:sz_/n}}return best}
+function load(){fetch(LOCAL?'/warcam.json':'warcam.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{D=d;setMap(d.map||0);
+ const now=performance.now();for(const p of d.champions){const o=dots[p.acc];if(o){o.fx=o.x;o.fz=o.z;o.tx=p.x;o.tz=p.z;o.t0=now;Object.assign(o,{hp:p.hp,mx:p.mx,atk:p.atk,heal:p.heal,tgt:p.tgt,kills:p.kills,deaths:p.deaths,on:true})}
+  else dots[p.acc]=Object.assign({x:p.x,z:p.z,fx:p.x,fz:p.z,tx:p.x,tz:p.z,t0:now,on:true},p)}
+ for(const k in dots){if(!d.champions.find(p=>p.acc===k))dots[k].on=false}
+ ls.textContent=d.kills[0]+' kills';fs.textContent=d.kills[1]+' kills';cnt.textContent=`${d.champions.length} on the field`;
+ for(const f of d.feed){if(f.t<=lastFeed)continue;lastFeed=f.t;const e=document.createElement('div');e.style.borderColor=f.ks===0?'#4f8cff':'#ff5a4a';
+  e.innerHTML=f.boss?`&#128128; <b style="color:#f2c14e">${esc(f.v)}</b> has fallen! Last blow: <b class="${f.ks===0?'L':f.ks===1?'F':''}">${esc(f.k)}</b>`:`<b class="${f.ks===0?'L':'F'}">${esc(f.k)}</b> slew <b class="${f.vs===0?'L':f.vs===1?'F':''}">${esc(f.v)}</b>`;if(f.boss)e.style.borderColor='#f2c14e';feed.prepend(e);while(feed.children.length>8)feed.lastChild.remove()}
+ }).catch(()=>{})}
+setInterval(load,2000);load();
+const Q=new URLSearchParams(location.search),EMBED=Q.get('embed')==='1',DIR=Q.get('mode')||'auto';let star=null,starAt=0;
+if(EMBED){document.body.classList.add('embed');const t=document.createElement('style');t.textContent='.embed .top,.embed .ctl,.embed #feed,.embed #info{display:none!important}.embed #cap{bottom:8px;font-size:11px;padding:4px 10px}';document.head.appendChild(t)}
+if(DIR==='all')mode='all';
+function hots(list){const A=list.filter(d=>d.atk),out=[];const used=new Set();
+ for(let k=0;k<3;k++){let best=null;for(const a of A){if(used.has(a))continue;let n=0,sx_=0,sz_=0;for(const b of A){if(!used.has(b)&&Math.hypot(a.x-b.x,a.z-b.z)<35){n++;sx_+=b.x;sz_+=b.z}}if(!best||n>best.n)best={n,x:sx_/n,z:sz_/n}}
+  if(!best)break;out.push(best);for(const b of A)if(Math.hypot(best.x-b.x,best.z-b.z)<70)used.add(b)}return out}
+function aim(){if(mode==='free')return;const L=Object.values(dots).filter(d=>d.on);if(!L.length)return;
+ const zs=Math.max(3.5,Math.min(7,innerWidth/160));
+ if(DIR==='second'&&mode!=='follow'){const H=hots(L);const h=H[1]||H[0];if(h){want={x:h.x,z:h.z,s:zs};cap.textContent=H[1]?`Second front: ${h.n} clashing`:'Second front: quiet, watching the main fight';return}}
+ if(DIR==='star'&&mode!=='follow'){const now=performance.now();if(!star||!dots[star]||!dots[star].on||now-starAt>60000){const b=L.slice().sort((a,c)=>(c.kills||0)-(a.kills||0))[0];star=b&&b.acc;starAt=now}
+  const d=dots[star];if(d){want={x:d.x,z:d.z,s:Math.min(9,zs*1.4)};cap.textContent=`Star cam: ${d.name} (${d.kills||0} kills)`;return}}
+ if(mode==='follow'&&follow&&dots[follow]&&dots[follow].on){const d=dots[follow];want={x:d.x,z:d.z,s:6};return}
+ if(mode==='me'&&D&&D.masters.length){want={x:D.masters[0].x,z:D.masters[0].z,s:5};return}
+ if(mode==='all'||!L.some(d=>d.atk)){let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9;for(const d of L){x0=Math.min(x0,d.x);x1=Math.max(x1,d.x);z0=Math.min(z0,d.z);z1=Math.max(z1,d.z)}
+  const w=Math.max(60,x1-x0,(z1-z0)*innerWidth/innerHeight);want={x:(x0+x1)/2,z:(z0+z1)/2,s:Math.min(8,innerWidth/(w*1.25))};cap.textContent=mode==='all'?'Whole battle':'Waiting for the next clash';return}
+ if(D&&D.bosses&&D.bosses.length){const b=D.bosses[0];want={x:b.x,z:b.z,s:Math.max(3.5,Math.min(7,innerWidth/160))};cap.textContent=`Auto camera: everyone is fighting ${b.name}`;return}
+ const h=hot(L),now=performance.now();
+ if(h&&(!spot||h.n>spot.n*1.3||now-spotSince>12000||Math.hypot(h.x-spot.x,h.z-spot.z)<30)){if(!spot||Math.hypot(h.x-spot.x,h.z-spot.z)>30)spotSince=now;spot=h}
+ if(spot){want={x:spot.x,z:spot.z,s:Math.max(3.5,Math.min(7,innerWidth/160))};cap.textContent=`Auto camera: ${spot.n} champions clashing here`}}
+function frame(){const now=performance.now();aim();
+ const k=0.06;cam.x+=(want.x-cam.x)*k;cam.z+=(want.z-cam.z)*k;cam.s+=(want.s-cam.s)*k;
+ g.fillStyle='#0b0e14';g.fillRect(0,0,cv.width,cv.height);
+ if(map.complete&&map.naturalWidth){const x0=sx(BX[0]),y0=sy(BX[3]),w=(BX[1]-BX[0])*cam.s*devicePixelRatio,h=(BX[3]-BX[2])*cam.s*devicePixelRatio;g.globalAlpha=.85;g.drawImage(map,x0,y0,w,h);g.globalAlpha=1}
+ const r=Math.max(3,cam.s*0.9)*devicePixelRatio;g.font=`${Math.round(11*devicePixelRatio)}px Segoe UI`;g.textAlign='center';
+ const L=Object.values(dots).filter(d=>d.on);
+ for(const d of L){const f=Math.min(1,(now-d.t0)/2000);d.x=d.fx+(d.tx-d.fx)*f;d.z=d.fz+(d.tz-d.fz)*f}
+ for(const d of L){if(!d.tgt)continue;const t=L.find(e=>e.cid===d.tgt);if(!t||Math.hypot(t.x-d.x,t.z-d.z)>60)continue;g.strokeStyle=d.side===0?'#6fa0ff66':'#ff6a5a66';g.lineWidth=1.2*devicePixelRatio;g.beginPath();g.moveTo(sx(d.x),sy(d.z));g.lineTo(sx(t.x),sy(t.z));g.stroke()}
+ for(const d of L){const X=sx(d.x),Y=sy(d.z);if(X<-50||Y<-50||X>cv.width+50||Y>cv.height+50)continue;
+  if(d.atk){g.beginPath();g.arc(X,Y,r*(1.8+0.4*Math.sin(now/90)),0,7);g.fillStyle=d.side===0?'#4f8cff33':'#ff5a4a33';g.fill()}
+  g.beginPath();g.arc(X,Y,r,0,7);g.fillStyle=d.side===0?'#4f8cff':'#ff5a4a';g.fill();g.lineWidth=(follow===d.acc?2.5:1)*devicePixelRatio;g.strokeStyle=follow===d.acc?'#f2c14e':'#000a';g.stroke();
+  if(cam.s>2.5){const w=r*3,hp=Math.max(0,Math.min(1,d.hp/d.mx));g.fillStyle='#000a';g.fillRect(X-w/2,Y-r-6*devicePixelRatio,w,3*devicePixelRatio);g.fillStyle=hp>.5?'#4caf6a':hp>.25?'#f2c14e':'#ff4a4a';g.fillRect(X-w/2,Y-r-6*devicePixelRatio,w*hp,3*devicePixelRatio)}
+  if(names&&cam.s>3.2){g.fillStyle='#f2efe6';g.fillText(d.name,X,Y+r+12*devicePixelRatio)}}
+ if(D)for(const b of D.bosses||[]){const X=sx(b.x),Y=sy(b.z),R=r*2.6;g.beginPath();g.arc(X,Y,R*(1.25+0.15*Math.sin(now/150)),0,7);g.fillStyle='#f2c14e33';g.fill();g.beginPath();g.arc(X,Y,R,0,7);g.fillStyle='#7a1fa2';g.fill();g.lineWidth=2*devicePixelRatio;g.strokeStyle='#f2c14e';g.stroke();g.fillStyle='#f2c14e';g.font=`bold ${Math.round(12*devicePixelRatio)}px Segoe UI`;g.fillText('\u2620 '+b.name,X,Y-R-6*devicePixelRatio);g.font=`${Math.round(11*devicePixelRatio)}px Segoe UI`}
+ if(D)for(const m of D.masters){const X=sx(m.x),Y=sy(m.z);g.beginPath();g.arc(X,Y,r*1.4,0,7);g.fillStyle='#f2c14e';g.fill();g.fillStyle='#f2c14e';g.fillText('YOU',X,Y-r*1.8)}
+ requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+function setMode(m){mode=m;bAuto.classList.toggle('on',m==='auto');bAll.classList.toggle('on',m==='all');bMe.classList.toggle('on',m==='me');if(m!=='follow'){follow=null;info.style.display='none'}
+ cap.textContent=m==='auto'?'Auto camera: following the fiercest fighting':m==='all'?'Whole battle':m==='me'?(D&&D.masters.length?'Following you':'You are not on the field'):''}
+bAuto.onclick=()=>setMode('auto');bAll.onclick=()=>setMode('all');bMe.onclick=()=>setMode('me');bNames.onclick=()=>{names=!names;bNames.classList.toggle('on',names)};
+cv.onclick=e=>{const X=e.clientX*devicePixelRatio,Y=e.clientY*devicePixelRatio;let best=null,bd=(20*devicePixelRatio)**2;
+ for(const d of Object.values(dots)){if(!d.on)continue;const dd=(sx(d.x)-X)**2+(sy(d.z)-Y)**2;if(dd<bd){bd=dd;best=d}}
+ if(!best){setMode('auto');return}follow=best.acc;mode='follow';bAuto.classList.remove('on');bAll.classList.remove('on');bMe.classList.remove('on');
+ info.style.display='block';info.innerHTML=`<b class="${best.side===0?'L':'F'}" style="font-size:16px">${esc(best.name)}</b><div style="color:#9aa3b5;font-size:12px">${best.side===0?'Alliance of Light':'Union of Fury'} ${J[best.job]} · House ${esc(best.house)} · Floor ${best.floor}<br>rating ${best.rating.toLocaleString()} · kills ${best.kills} · deaths ${best.deaths}</div><div style="margin-top:6px;font-size:12px;color:#f2c14e">Following · tap empty ground to go back to auto</div>`;
+ cap.textContent='Following '+best.name};
+let drag=null;cv.onpointerdown=e=>{drag={x:e.clientX,y:e.clientY,cx:cam.x,cz:cam.z,moved:false}};
+cv.onpointermove=e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>6){drag.moved=true;mode='free';bAuto.classList.remove('on');bAll.classList.remove('on');bMe.classList.remove('on');cap.textContent='Free camera · tap Auto camera to go back'}
+ if(drag.moved){cam.x=want.x=drag.cx-dx/cam.s;cam.z=want.z=drag.cz+dy/cam.s}};
+addEventListener('pointerup',()=>{if(drag&&drag.moved){cv.onclick_block=true}drag=null});
+cv.addEventListener('wheel',e=>{e.preventDefault();want.s=cam.s=Math.max(0.3,Math.min(14,cam.s*(e.deltaY<0?1.15:0.87)));if(mode==='auto'){mode='free';bAuto.classList.remove('on')}},{passive:false});
+</script><a id="menubtn" href="index.html" style="position:fixed;right:14px;bottom:14px;z-index:99999;background:#151a28;border:1px solid #c9a54a;color:#f1dfa8;padding:8px 15px;border-radius:20px;font:600 14px Segoe UI,sans-serif;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.5)">&#9776; Menu</a><script>(function(){var H='index.html';function tag(){document.querySelectorAll('h1,h2').forEach(function(h){if(h.dataset.mb||h.closest('a,button,#menubtn,.no-menu'))return;h.dataset.mb=1;var a=document.createElement('a');a.href=H;a.className='secmenu';a.textContent='☰ Menu';h.appendChild(a)})}
+var s=document.createElement('style');s.textContent='.secmenu{display:inline-block;margin-left:12px;vertical-align:middle;font:600 11px Segoe UI,sans-serif;letter-spacing:.3px;color:#f1dfa8!important;background:#151a28;border:1px solid #c9a54a;border-radius:12px;padding:2px 9px;text-decoration:none!important;opacity:.75;text-transform:none}.secmenu:hover{opacity:1;background:#232a40}';document.head.appendChild(s);
+tag();var t=null;new MutationObserver(function(){clearTimeout(t);t=setTimeout(tag,150)}).observe(document.body,{childList:true,subtree:true})})();</script><style id="mfx">
+@media(max-width:760px){
+ body{overflow-wrap:break-word;-webkit-text-size-adjust:100%}
+ td,th{overflow-wrap:normal;word-break:normal}
+ img,video,canvas{max-width:100%;height:auto}
+ svg{max-width:100%;height:auto}
+ .mscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+ nav{flex-wrap:wrap;row-gap:6px}
+ .secmenu{display:none!important}
+ #menubtn,a[href][style*="position:fixed"][style*="bottom:14px"]{padding:6px 12px!important;font-size:13px!important;right:10px!important;bottom:10px!important}
+}
+.flpick{display:inline-flex;gap:6px;align-items:center;margin-left:auto}
+.flpick button,.flpick select{background:#20242f;color:#e8e9ee;border:1px solid #303648;border-radius:7px;padding:4px 8px;font:inherit;font-size:13px;cursor:pointer}
+.flpick button:disabled{opacity:.3;cursor:default}
+</style>
+<script>(function(){
+var W=function(){return window.innerWidth};
+function fit(){
+ if(W()>760)return;
+ document.querySelectorAll('table').forEach(function(t){
+  if(t.dataset.mw||t.closest('.mscroll'))return;var p=t.parentElement;if(!p)return;
+  var o=getComputedStyle(p).overflowX;if(o==='auto'||o==='scroll')return;
+  if(t.scrollWidth>p.clientWidth+2){var d=document.createElement('div');d.className='mscroll';p.insertBefore(d,t);d.appendChild(t);t.dataset.mw=1}});
+ document.querySelectorAll('body *').forEach(function(e){                       // grids squeezed into slivers: let them stack
+   if(e.closest('.mscroll,svg')||e.classList.contains('floors')||e.dataset.mg)return;
+   var cs=getComputedStyle(e);if(cs.display.indexOf('grid')<0)return;
+   var cols=cs.gridTemplateColumns.split(' ').filter(function(x){return x&&x!=='none'}).map(parseFloat);
+   if(cols.length<2)return;var mn=Math.min.apply(null,cols);
+   var heavy=e.querySelector('svg,table,canvas,img');
+   if(heavy&&mn<260){e.style.gridTemplateColumns='minmax(0,1fr)';e.dataset.mg=1}
+   else if(mn<110){e.style.gridTemplateColumns='repeat(auto-fit,minmax(min(100%,140px),1fr))';e.dataset.mg=1}});
+ for(var pass=0;pass<2;pass++){
+  document.querySelectorAll('body *').forEach(function(e){
+   if(e.closest('.mscroll,svg')||e.tagName==='TABLE'||e.tagName==='SCRIPT'||e.tagName==='STYLE')return;
+   var r=e.getBoundingClientRect();if(r.width<=W()+1)return;
+   var cs=getComputedStyle(e);
+   if(cs.position==='fixed')return;
+   if(cs.display.indexOf('grid')>=0)e.style.gridTemplateColumns='repeat(auto-fit,minmax(min(100%,150px),1fr))';
+   else if(cs.display.indexOf('flex')>=0)e.style.flexWrap='wrap';
+   if(e.tagName==='svg'||e.tagName==='SVG'){e.style.width='100%';e.style.height='auto'}
+   else{e.style.maxWidth='100%';e.style.minWidth='0';e.style.boxSizing='border-box'}});
+ }}
+function floors(){
+ var m=location.pathname.match(/\/floor\/(\d\d)\/([^\/]*)$/);
+ if(!m||document.getElementById('flsel')||document.querySelector('.flpick'))return;
+ var n=+m[1],page=m[2]||'',pad=function(k){return(k<10?'0':'')+k};
+ var s=document.createElement('span');s.className='flpick';
+ var o='';for(var k=1;k<=20;k++)o+='<option value="'+k+'"'+(k===n?' selected':'')+'>Floor '+k+'</option>';
+ s.innerHTML='<button aria-label="Previous floor"'+(n<=1?' disabled':'')+'>&larr;</button><select aria-label="Choose a floor">'+o+'</select><button aria-label="Next floor"'+(n>=20?' disabled':'')+'>&rarr;</button>';
+ var go=function(k){location.href='../'+pad(k)+'/'+page};
+ var b=s.querySelectorAll('button');b[0].onclick=function(){go(n-1)};b[1].onclick=function(){go(n+1)};s.querySelector('select').onchange=function(){go(+this.value)};
+ var nav=document.querySelector('nav');
+ if(nav){nav.style.display=nav.style.display||'flex';nav.style.flexWrap='wrap';nav.style.alignItems='center';nav.appendChild(s)}
+ else{var h=document.querySelector('h1');if(h)h.parentElement.insertBefore(s,h.nextSibling)}}
+function run(){try{floors()}catch(e){}try{fit()}catch(e){}}
+if(document.readyState!=='loading')run();else document.addEventListener('DOMContentLoaded',run);
+window.addEventListener('load',run);var t=null;
+new MutationObserver(function(){clearTimeout(t);t=setTimeout(function(){try{fit()}catch(e){}},300)}).observe(document.documentElement,{childList:true,subtree:true});
+window.addEventListener('resize',function(){clearTimeout(t);t=setTimeout(run,300)});
+})();</script></body></html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shaiya Civilization</title>
+<style>
+:root{--bg:#0a0d16;--panel:#121726;--line:#263050;--gold:#e9c46a;--text:#e8e2d0;--dim:#9a97a8;--L:#79a9ff;--F:#ff7a6a}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -10%,#232b4d 0%,#0a0d16 60%) fixed;color:var(--text);font:15px/1.5 Inter,"Segoe UI",system-ui,sans-serif;min-height:100vh}
+main{max-width:1120px;margin:auto;padding:34px 20px 60px}
+.hero{display:flex;align-items:center;gap:26px;flex-wrap:wrap}
+.hero svg{width:110px;height:auto;flex:none}
+
+ #bigpause{display:none;background:linear-gradient(180deg,#a10f0f,#5e0707);color:#fff;text-align:center;padding:26px 14px 22px;border-bottom:3px solid #ff4a4a;box-shadow:0 6px 30px rgba(200,0,0,.45)}
+#bigpause .bp1{font:900 clamp(44px,11vw,110px)/1 'Segoe UI',system-ui,sans-serif;letter-spacing:.12em;text-shadow:0 0 24px rgba(255,80,80,.7);animation:bpp 2.6s ease-in-out infinite}
+#bigpause .bp2{font:600 clamp(13px,2.6vw,18px)/1.4 'Segoe UI',sans-serif;opacity:.92;margin-top:8px}
+@keyframes bpp{50%{opacity:.72}}
+.ttlrow{display:flex;align-items:center;flex-wrap:wrap;gap:10px 18px}
+#pausedbadge{display:none;flex-direction:column;justify-content:center;background:linear-gradient(90deg,#8c0f0f,#d01b1b);color:#fff;border-radius:8px;padding:8px 16px 7px;
+ box-shadow:0 0 0 2px #ff5a5a55,0 4px 18px rgba(220,20,20,.45);animation:pbglow 2.4s ease-in-out infinite;transform:rotate(-1.5deg)}
+#pausedbadge .pb1{font:900 22px/1.05 'Segoe UI',system-ui,sans-serif;letter-spacing:.09em;text-transform:uppercase}
+#pausedbadge .pb2{font:600 12px/1.3 'Segoe UI',sans-serif;opacity:.92;margin-top:3px;letter-spacing:.02em}
+@keyframes pbglow{50%{box-shadow:0 0 0 2px #ff8a8a88,0 4px 30px rgba(255,40,40,.8)}}
+@media(max-width:640px){#pausedbadge{padding:6px 11px 5px}#pausedbadge .pb1{font-size:16px}#pausedbadge .pb2{font-size:11px}}
+h1{font-family:Georgia,"DejaVu Serif",serif;font-size:46px;margin:0;letter-spacing:.04em;background:linear-gradient(180deg,#f8e9bd,#c99b3a);-webkit-background-clip:text;color:transparent}
+.tag{color:var(--dim);margin:2px 0 0}.status{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap}
+.chip{background:#141a2b;border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:13px;color:#cfc9b6}.chip b{color:var(--gold)}
+h2{font-family:Georgia,serif;font-weight:normal;color:#f1dfa8;margin:34px 0 12px;font-size:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.tile{display:block;text-decoration:none;color:inherit;background:linear-gradient(160deg,#1a2136,#10141f);border:1px solid var(--line);border-radius:16px;padding:20px;position:relative;overflow:hidden;transition:transform .15s,border-color .15s}
+.tile:hover{transform:translateY(-3px);border-color:var(--gold)}
+.tile.live{border-color:#ff4a4a;animation:glow 1.6s ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 6px rgba(255,60,60,.35),inset 0 0 0 1px rgba(255,80,80,.25)}50%{box-shadow:0 0 22px rgba(255,60,60,.8),inset 0 0 0 1px rgba(255,120,120,.6)}}
+.tile .livebadge{display:none;position:absolute;top:14px;right:40px;font-size:11px;font-weight:800;letter-spacing:.08em;color:#ff5a5a}
+.tile.live .livebadge{display:block}.tile .livebadge:before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff3030;margin-right:5px;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.2}}
+.tile .ic{font-size:30px;line-height:1}.tile h3{margin:10px 0 4px;font-size:20px;color:#fff}.tile p{margin:0;color:var(--dim);font-size:14px}
+.tile .go{position:absolute;right:16px;top:18px;color:var(--gold)}
+.big{grid-column:span 2}@media(max-width:620px){.big{grid-column:auto}}
+.floors{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:8px}@media(max-width:760px){.floors{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.fl{display:block;text-align:center;text-decoration:none;color:#fff;border-radius:10px;padding:10px 4px;border:1px solid var(--line);font-weight:700}
+.fl small{display:block;font-weight:400;color:#cfc9b6;font-size:11px}
+.fl:hover{border-color:var(--gold)}
+.fl.on{outline:2px solid var(--gold);outline-offset:1px}.sub2{color:var(--dim);margin:14px 0 8px;font-size:14px}.sub2 b{color:#f1dfa8}
+.floorpick{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+select{font:inherit;color:var(--text);background:#0e1320;border:1px solid var(--line);border-radius:9px;padding:8px 10px}
+.mini{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.mini a{display:block;text-decoration:none;color:inherit;background:#121726;border:1px solid var(--line);border-radius:12px;padding:12px 14px}.mini a:hover{border-color:var(--gold)}
+.mini b{display:block;color:#fff}.mini span{color:var(--dim);font-size:13px}
+footer{margin-top:40px;color:var(--dim);font-size:13px;text-align:center}
+@media(max-width:640px){main{padding:18px 14px 50px}.hero{gap:14px;flex-wrap:nowrap;align-items:center}.hero svg{width:58px}h1{font-size:30px;line-height:1.1}.tag{font-size:14px;margin:6px 0}
+ .grid{grid-template-columns:1fr 1fr;gap:10px}.tile{padding:13px 12px;border-radius:12px}.tile .ic{font-size:22px}.tile h3{font-size:15px;margin:6px 0 3px}.tile p{font-size:12px;line-height:1.35}.tile .go{display:none}
+ .tile.big{grid-column:1/-1}.mini{grid-template-columns:1fr 1fr}.mini a{padding:10px 11px}.mini span{font-size:12px}}
+#warban{display:none;position:sticky;top:0;z-index:50;background:linear-gradient(90deg,#7a0d0d,#c41616,#7a0d0d);color:#fff;text-align:center;font-weight:800;letter-spacing:.06em;padding:10px 12px;font-size:18px;box-shadow:0 3px 14px rgba(200,0,0,.45);text-transform:uppercase;text-decoration:none}
+#warban small{display:block;font-weight:600;font-size:12px;letter-spacing:.02em;text-transform:none;opacity:.9}
+</style></head><body><a id="warban" href="war"></a><div id="bigpause"><div class="bp1">&#9208; PAUSED</div><div class="bp2">The world and the war are resting. They will be back.</div></div><main>
+<section class="hero">
+ <a id="lCru" href="crucible" tabindex="-1" style="cursor:default;display:inline-block;line-height:0" aria-hidden="true"><svg viewBox="0 0 120 150" aria-hidden="true"><defs><linearGradient id="tg" x1="0" x2="1"><stop offset="0" stop-color="#f6e3a8"/><stop offset="1" stop-color="#a87b2a"/></linearGradient></defs>
+  <circle cx="60" cy="22" r="16" fill="#ffe9a8" opacity=".25"/><g id="tw"></g></svg></a>
+ <div><div class="ttlrow"><h1>Shaiya Civilization</h1><span id="pausedbadge"><span class="pb1">&#9208; World paused</span><span class="pb2" id="pb2"></span></span></div><p class="tag">A living world of thousands of citizens who are born, learn, love, fight and die on their own, now living in a Tower of twenty floors.</p>
+ <div class="status" id="status"><span class="chip">loading...</span></div></div>
+</section>
+
+<h2>The Tower</h2>
+<div class="grid">
+ <a class="tile big" id="lTower" href="tower"><span class="go">&rarr;</span><div class="ic">&#127984;</div><h3>The Tower</h3><p>All twenty floors at a glance: rulers, champions, the Grand Auction and the nightly tournament.</p></a>
+ <a class="tile" id="lStrong" href="strongest"><span class="go">&rarr;</span><div class="ic">&#127942;</div><h3>Strongest of the Tower</h3><p>Everyone alive on every floor ranked by battle rating, floor beside each name.</p></a>
+ <a class="tile" id="lWar" href="war"><span class="go">&rarr;</span><div class="ic">&#9876;&#65039;</div><h3>The Borderland Eternal</h3><p>The first AI war: the civilization's champions, Alliance of Light vs Union of Fury, inside the real game.</p></a>
+ <a class="tile" id="lCam" href="warcam.html"><span class="go">&rarr;</span><span class="livebadge">LIVE</span><div class="ic">&#127909;</div><h3>War Cam (live)</h3><p>Watch the battle from above. The camera flies to wherever the fighting is fiercest.</p></a>
+ <a class="tile" id="lRoom" href="/warroom" style="display:none"><span class="go">&rarr;</span><span class="livebadge">LIVE</span><div class="ic">&#128250;</div><h3>War Room (broadcast)</h3><p>Four live cameras, the scoreboard and a breaking-news ticker. On this PC only.</p></a>
+ <a class="tile" id="lChat" href="realmchat.html"><span class="go">&rarr;</span><span class="livebadge">LIVE</span><div class="ic">&#128172;</div><h3>Party Chat (live)</h3><p>Listen in: every party's own chat and both union channels on the level-80 field.</p></a>
+ <a class="tile" id="lQuests" href="quests"><span class="go">&rarr;</span><div class="ic">&#128220;</div><h3>Quest Board</h3><p>The quest-givers of every floor, who is working what, and the heroes who finish the most.</p></a>
+ <a class="tile" id="lArena" href="arena"><span class="go">&rarr;</span><div class="ic">&#9876;&#65039;</div><h3>Tower Arena</h3><p>Summon any two citizens and watch them fight.</p></a>
+</div>
+
+<h2>Its people</h2>
+<div class="grid">
+ <a class="tile" id="lHouses" href="houses"><span class="go">&rarr;</span><div class="ic">&#127968;</div><h3>Houses</h3><p>The great families, ranked by house power, with every member.</p></a>
+ <a class="tile" id="lGuilds" href="guilds"><span class="go">&rarr;</span><div class="ic">&#128737;&#65039;</div><h3>Guilds</h3><p>Every guild ranked by guild power, with leaders and members.</p></a>
+ <a class="tile" id="lFaiths" href="faiths"><span class="go">&rarr;</span><div class="ic">&#128591;</div><h3>Faiths</h3><p>Every living faith: its god, founder and believers.</p></a>
+ <a class="tile" id="lFallen" href="fallen"><span class="go">&rarr;</span><div class="ic">&#9904;&#65039;</div><h3>Hall of the Fallen</h3><p>Everyone who ever died since year 1, with the Statue Garden and their last profiles.</p></a>
+</div>
+
+<h2>Learning &amp; story</h2>
+<div class="grid">
+ <a class="tile" id="lSchool" href="school"><span class="go">&rarr;</span><div class="ic">&#127891;</div><h3>The School</h3><p>Children growing language brains of their own, inherited from their families.</p></a>
+ <a class="tile" id="lBooks" href="books"><span class="go">&rarr;</span><div class="ic">&#128214;</div><h3>The Library</h3><p>Every book the citizens learn from, the Tower Herald and the Wanderer's sayings.</p></a>
+ <a class="tile" id="lHistory" href="history"><span class="go">&rarr;</span><div class="ic">&#128202;</div><h3>History of all floors</h3><p>The whole story in charts, from the old worlds to all twenty floors.</p></a>
+</div>
+
+<h2>The twenty floors</h2>
+<div class="floors" id="floors"></div>
+<div class="sub2" id="fsel"></div>
+<div class="mini" id="mini"></div>
+
+<h2 style="display:none">Archives</h2>
+<div class="mini" style="display:none">
+ <a id="lFirst" href="first/"><b>The First World</b><span>The original world, up to the Reunion in year 800.</span></a>
+ <a id="lTwin" href="twin/"><b>The Twin World</b><span>The sister world with its own faiths, merged back at the Reunion.</span></a>
+</div>
+<footer>Updated automatically from the running civilization.</footer>
+</main>
+<script>
+const LOCAL=['127.0.0.1','localhost'].includes(location.hostname);
+const P=LOCAL?{tower:'/tower',arena:'/arena',school:'/school',faiths:'/faiths',guilds:'/guilds',houses:'/houses',history:'/history',fallen:'/fallen',books:'/books',strong:'/strongest',quests:'/quests',war:'/war',crucible:'/crucible',first:'/first/',twin:'/twin/',floor:n=>`/floor/${n}/`}:{tower:'tower.html',arena:'arena.html',school:'school.html',faiths:'faiths.html',guilds:'guilds.html',houses:'houses.html',history:'history.html',fallen:'fallen.html',books:'books.html',strong:'strongest.html',quests:'quests.html',war:'war.html',crucible:'crucible.html',first:'first/',twin:'twin/',floor:n=>`floor/${n}/`};
+lTower.href=P.tower;lFaiths.href=P.faiths;lGuilds.href=P.guilds;lHouses.href=P.houses;lHistory.href=P.history;lFallen.href=P.fallen;lBooks.href=P.books;lStrong.href=P.strong;lQuests.href=P.quests;lWar.href=P.war;lCam.href=LOCAL?'/warcam':'warcam.html';lChat.href=LOCAL?'/realmchat':'realmchat.html';if(LOCAL)lRoom.style.display='';
+function live(){fetch(LOCAL?'/warcam.json':'warcam.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{const on=!!(d&&d.champions&&d.champions.some(c=>c.atk)&&Date.now()/1000-d.t<600);lCam.classList.toggle('live',on);lRoom.classList.toggle('live',on);lChat.classList.toggle('live',on)}).catch(()=>{})}
+live();setInterval(live,10000);warban.href=P.war;
+let WB=null;function wb(){const b=warban;if(!WB||!WB.starts_at){b.style.display='none';return}const s=Math.round(WB.starts_at-Date.now()/1000);
+ if(s<-3*3600&&!WB.running){b.style.display='none';return}b.style.display='block';
+ if(s>0){b.innerHTML=`War starts in ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}<small>Light vs Fury · 240 champions · D-Water Borderland · tap for the War Board</small>`}
+ else b.innerHTML=WB.running?'&#9876;&#65039; The Borderland Eternal rages<small>The first AI war · No Cooldown · tap for the War Board</small>':'The war is over<small>Tap for the results</small>'}
+function wl(){fetch(LOCAL?'/war.json':'war.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(d=>{WB=d;wb()}).catch(()=>{})}
+wl();setInterval(wl,30000);setInterval(wb,1000);lCru.href=P.crucible;lArena.href=P.arena;lSchool.href=P.school;lFirst.href=P.first;lTwin.href=P.twin;
+// the emblem: a tower of twenty floors
+document.getElementById('tw').innerHTML=Array.from({length:20},(_,i)=>{const w=58-i*2.1,y=140-i*6.2;return `<rect x="${60-w/2}" y="${y}" width="${w}" height="5.6" rx="1" fill="${i%5==4?'#f2c14e':'#c9a24c'}" opacity="${.55+i*.022}"/>`}).join('');
+const pad=n=>String(n).padStart(2,'0');let ST={};
+function floors(){const sz=ST.sizes||[];document.getElementById('floors').innerHTML=Array.from({length:20},(_,i)=>{const n=i+1,h=42-i*1.6;
+ return `<a class="fl" data-n="${pad(n)}" href="${P.floor(pad(n))}" style="background:hsl(${h},${55-i}%,${26-i*.5}%)">${n}<small>${sz[i]?sz[i].toLocaleString()+' ppl':''}</small></a>`}).join('');
+ document.querySelectorAll('#floors .fl').forEach(a=>a.onclick=e=>{e.preventDefault();cur=a.dataset.n;try{localStorage.setItem('menuFloor',cur)}catch(x){}mini()});
+ document.querySelectorAll('#floors .fl').forEach(a=>a.classList.toggle('on',a.dataset.n===cur))}
+let cur='01';try{cur=localStorage.getItem('menuFloor')||'01'}catch(e){}
+function mini(){const b=P.floor(cur);document.getElementById('fsel').innerHTML=`Pages of <b>Floor ${+cur}</b> (click another floor above to switch):`;
+ document.querySelectorAll('#floors .fl').forEach(a=>a.classList.toggle('on',a.dataset.n===cur));document.getElementById('mini').innerHTML=[
+ ['map.html','World map','Where everyone is hunting right now'],
+ ['tavern.html','Tavern','Chatter, the dictionary, faiths and the realm']].map(([u,t,d])=>`<a href="${b}${u}"><b>${t}</b><span>${d}</span></a>`).join('')}
+floors();mini();
+fetch(LOCAL?'/status.json':'status.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{if(!s)return;ST=s;floors();
+ const c=[];if(s.year!=null)c.push(`Year <b>${s.year}</b>`);if(s.people)c.push(`<b>${s.people.toLocaleString()}</b> people`);c.push(`<b>20</b> floors`);
+document.getElementById('pausedbadge').style.display=s.paused&&s.realm?'flex':'none';document.getElementById('bigpause').style.display=s.paused&&!s.realm?'block':'none';pb2.textContent=s.realm?`but ${s.realm} champions still fight in the Living Realm`:'the Tower sleeps';
+ if(s.paused)c.push('<span style="color:#f2c14e">&#9208; <b>World paused</b></span>');else if(s.mode)c.push(s.mode==='live'?'<b>live</b> (real time)':'<b>fast-forward</b>');
+ if(s.realm)c.push(`<span style="color:#ff7a6a">&#9876;&#65039; <b>${s.realm}</b> champions fighting in the Living Realm</span>`);if(s.pupils)c.push(`<b>${s.pupils}</b> pupils at school`);if(s.fights)c.push(`<b>${s.fights}</b> Arena fights`);
+ document.getElementById('status').innerHTML=c.map(x=>`<span class="chip">${x}</span>`).join('')}).catch(()=>{document.getElementById('status').innerHTML=''});
+</script></body></html>

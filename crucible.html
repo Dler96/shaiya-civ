@@ -1,0 +1,84 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>The Crucible</title>
+<style>body{margin:0;background:#0b0a09;color:#e8e2d6;font:15px/1.5 "Segoe UI",sans-serif;padding:22px}h1{color:#d0562f;margin:0}.m{color:#948c7e;font-size:13px}
+table{border-collapse:collapse;width:100%;max-width:1000px;margin-top:14px}td,th{padding:6px 8px;border-bottom:1px solid #2a2622;text-align:left}th{color:#948c7e;font-weight:600;font-size:13px}
+.n{text-align:right}.t{color:#ffb347;font-weight:700}a{color:#ffb347}</style></head><body>
+<div style="margin-bottom:10px"><a href="./" style="color:#ffb347;text-decoration:none">&larr; Menu</a></div><h1>&#128293; The Crucible</h1><div class="m">Owner only. Floor 20 is the harshest floor (poorest hunting, half again the wounds) and hides the Tower's secret:
+monsters slain there are counted, and at each threshold the hunter is permanently strengthened, more at every tier. The citizens are never told; it stays with them if they climb.</div>
+<div class="m" id="th"></div><table id="t"></table>
+<h1 style="margin-top:34px;color:#9b7bff">&#128506;&#65039; The Hidden Path</h1><div class="m">Owner only. On Floors 15&ndash;20 a seasoned quester (level 80, 15 quests done) may be handed a torn map by a hooded stranger.
+Six trials follow; each can only be walked on a higher floor (15, 16 &hellip; 20). Whoever passes the last, on Floor 20, is lifted five levels at once (since the Era of the Unbound there is no level cap, and every level past 80 is otherwise years of work). It can be walked again. The citizens are never told.</div>
+<div class="m" id="hp"></div><table id="tr" style="max-width:700px"></table>
+<h3 style="color:#9b7bff;margin:18px 0 0">Walking the path now</h3><table id="wk"></table>
+<h3 style="color:#9b7bff;margin:18px 0 0">Those who finished the path</h3><table id="as"></table>
+<h3 style="color:#9b7bff;margin:18px 0 0">What happened on the path</h3><table id="ev"></table>
+<script>fetch('hidden_path.json',{cache:'no-store'}).then(r=>r.json()).then(H=>{const pf=(f,k)=>`floor/${String(f).padStart(2,'0')}/people.html#p-${k}`;
+document.getElementById('hp').textContent='Year '+H.year+' \u00b7 '+H.walkers.length+' walking \u00b7 '+H.ascended.length+' have finished it';
+document.getElementById('tr').innerHTML='<tr><th>#</th><th>Trial</th><th>Walked on</th><th class="n">Hours of hunting</th></tr>'+H.trials.map((t,i)=>`<tr><td class="t">${i+1}</td><td>${t.title}</td><td>Floor ${t.floor}${t.floor<20?'+':''}</td><td class="n">${t.hours.toLocaleString()}</td></tr>`).join('');
+document.getElementById('wk').innerHTML='<tr><th>Who</th><th>Lives on</th><th>Trial</th><th class="n">Progress</th></tr>'+(H.walkers.map(w=>`<tr><td><a href="${pf(w.floor,w.k)}">${w.name}</a> <span class="m">of House ${w.house} &middot; level ${w.level}</span></td><td>Floor ${w.floor}</td><td>${w.trial}/${w.of}: ${w.title}${w.stuck?` <span class="m">(the trail is cold below Floor ${w.needs})</span>`:''}</td><td class="n">${w.prog}%</td></tr>`).join('')||'<tr><td colspan=4 class="m">Nobody walks the path yet.</td></tr>');
+document.getElementById('as').innerHTML='<tr><th>Who</th><th>Lives on</th><th class="n">Level</th><th class="n">Paths finished</th></tr>'+(H.ascended.map(a=>`<tr><td><a href="${pf(a.floor,a.k)}">${a.name}</a> <span class="m">of House ${a.house}</span></td><td>Floor ${a.floor}</td><td class="n t">${a.level}</td><td class="n">${a.paths}</td></tr>`).join('')||'<tr><td colspan=4 class="m">None yet.</td></tr>');
+document.getElementById('ev').innerHTML=(H.events.map(e=>`<tr><td class="m">Year ${e.year}</td><td><b>${e.name}</b> <span class="m">of House ${e.house}, Floor ${e.floor}</span> ${e.what}</td></tr>`).join('')||'<tr><td class="m">Nothing yet.</td></tr>')}).catch(()=>document.getElementById('hp').textContent='No report yet.');</script>
+<script>const J=['Fighter','Defender','Ranger','Archer','Mage','Priest'];fetch('crucible.json',{cache:'no-store'}).then(r=>r.json()).then(D=>{
+document.getElementById('th').textContent='Year '+D.year+' \u00b7 '+D.total+' have crossed at least one threshold \u00b7 tiers at '+D.thresholds.map(x=>x.toLocaleString()).join(' / ')+' monsters';
+document.getElementById('t').innerHTML='<tr><th>Tier</th><th>Who</th><th>Lives on</th><th class="n">Slain in the Crucible</th><th class="n">Stats gained</th></tr>'+D.rows.map(r=>
+`<tr><td class="t">${r.tier}</td><td><a href="floor/${String(r.floor).padStart(2,'0')}/people.html#p-${r.k}">${r.name}</a> <span class="m">of House ${r.house} &middot; ${J[r.job]}, ${r.age}</span></td><td>Floor ${r.floor}</td><td class="n">${r.kills.toLocaleString()}</td><td class="n">+${r.grit.toLocaleString()}</td></tr>`).join('')||'<tr><td colspan=5 class="m">Nobody yet.</td></tr>'}).catch(()=>document.getElementById('th').textContent='No report yet: it appears after the next sim month.');</script><a id="menubtn" href="index.html" style="position:fixed;right:14px;bottom:14px;z-index:99999;background:#151a28;border:1px solid #c9a54a;color:#f1dfa8;padding:8px 15px;border-radius:20px;font:600 14px Segoe UI,sans-serif;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.5)">&#9776; Menu</a><script>(function(){var H='index.html';function tag(){document.querySelectorAll('h1,h2').forEach(function(h){if(h.dataset.mb||h.closest('a,button,#menubtn,.no-menu'))return;h.dataset.mb=1;var a=document.createElement('a');a.href=H;a.className='secmenu';a.textContent='☰ Menu';h.appendChild(a)})}
+var s=document.createElement('style');s.textContent='.secmenu{display:inline-block;margin-left:12px;vertical-align:middle;font:600 11px Segoe UI,sans-serif;letter-spacing:.3px;color:#f1dfa8!important;background:#151a28;border:1px solid #c9a54a;border-radius:12px;padding:2px 9px;text-decoration:none!important;opacity:.75;text-transform:none}.secmenu:hover{opacity:1;background:#232a40}';document.head.appendChild(s);
+tag();var t=null;new MutationObserver(function(){clearTimeout(t);t=setTimeout(tag,150)}).observe(document.body,{childList:true,subtree:true})})();</script><style id="mfx">
+@media(max-width:760px){
+ body{overflow-wrap:break-word;-webkit-text-size-adjust:100%}
+ td,th{overflow-wrap:normal;word-break:normal}
+ img,video,canvas{max-width:100%;height:auto}
+ svg{max-width:100%;height:auto}
+ .mscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+ nav{flex-wrap:wrap;row-gap:6px}
+ .secmenu{display:none!important}
+ #menubtn,a[href][style*="position:fixed"][style*="bottom:14px"]{padding:6px 12px!important;font-size:13px!important;right:10px!important;bottom:10px!important}
+}
+.flpick{display:inline-flex;gap:6px;align-items:center;margin-left:auto}
+.flpick button,.flpick select{background:#20242f;color:#e8e9ee;border:1px solid #303648;border-radius:7px;padding:4px 8px;font:inherit;font-size:13px;cursor:pointer}
+.flpick button:disabled{opacity:.3;cursor:default}
+</style>
+<script>(function(){
+var W=function(){return window.innerWidth};
+function fit(){
+ if(W()>760)return;
+ document.querySelectorAll('table').forEach(function(t){
+  if(t.dataset.mw||t.closest('.mscroll'))return;var p=t.parentElement;if(!p)return;
+  var o=getComputedStyle(p).overflowX;if(o==='auto'||o==='scroll')return;
+  if(t.scrollWidth>p.clientWidth+2){var d=document.createElement('div');d.className='mscroll';p.insertBefore(d,t);d.appendChild(t);t.dataset.mw=1}});
+ document.querySelectorAll('body *').forEach(function(e){                       // grids squeezed into slivers: let them stack
+   if(e.closest('.mscroll,svg')||e.classList.contains('floors')||e.dataset.mg)return;
+   var cs=getComputedStyle(e);if(cs.display.indexOf('grid')<0)return;
+   var cols=cs.gridTemplateColumns.split(' ').filter(function(x){return x&&x!=='none'}).map(parseFloat);
+   if(cols.length<2)return;var mn=Math.min.apply(null,cols);
+   var heavy=e.querySelector('svg,table,canvas,img');
+   if(heavy&&mn<260){e.style.gridTemplateColumns='minmax(0,1fr)';e.dataset.mg=1}
+   else if(mn<110){e.style.gridTemplateColumns='repeat(auto-fit,minmax(min(100%,140px),1fr))';e.dataset.mg=1}});
+ for(var pass=0;pass<2;pass++){
+  document.querySelectorAll('body *').forEach(function(e){
+   if(e.closest('.mscroll,svg')||e.tagName==='TABLE'||e.tagName==='SCRIPT'||e.tagName==='STYLE')return;
+   var r=e.getBoundingClientRect();if(r.width<=W()+1)return;
+   var cs=getComputedStyle(e);
+   if(cs.position==='fixed')return;
+   if(cs.display.indexOf('grid')>=0)e.style.gridTemplateColumns='repeat(auto-fit,minmax(min(100%,150px),1fr))';
+   else if(cs.display.indexOf('flex')>=0)e.style.flexWrap='wrap';
+   if(e.tagName==='svg'||e.tagName==='SVG'){e.style.width='100%';e.style.height='auto'}
+   else{e.style.maxWidth='100%';e.style.minWidth='0';e.style.boxSizing='border-box'}});
+ }}
+function floors(){
+ var m=location.pathname.match(/\/floor\/(\d\d)\/([^\/]*)$/);
+ if(!m||document.getElementById('flsel')||document.querySelector('.flpick'))return;
+ var n=+m[1],page=m[2]||'',pad=function(k){return(k<10?'0':'')+k};
+ var s=document.createElement('span');s.className='flpick';
+ var o='';for(var k=1;k<=20;k++)o+='<option value="'+k+'"'+(k===n?' selected':'')+'>Floor '+k+'</option>';
+ s.innerHTML='<button aria-label="Previous floor"'+(n<=1?' disabled':'')+'>&larr;</button><select aria-label="Choose a floor">'+o+'</select><button aria-label="Next floor"'+(n>=20?' disabled':'')+'>&rarr;</button>';
+ var go=function(k){location.href='../'+pad(k)+'/'+page};
+ var b=s.querySelectorAll('button');b[0].onclick=function(){go(n-1)};b[1].onclick=function(){go(n+1)};s.querySelector('select').onchange=function(){go(+this.value)};
+ var nav=document.querySelector('nav');
+ if(nav){nav.style.display=nav.style.display||'flex';nav.style.flexWrap='wrap';nav.style.alignItems='center';nav.appendChild(s)}
+ else{var h=document.querySelector('h1');if(h)h.parentElement.insertBefore(s,h.nextSibling)}}
+function run(){try{floors()}catch(e){}try{fit()}catch(e){}}
+if(document.readyState!=='loading')run();else document.addEventListener('DOMContentLoaded',run);
+window.addEventListener('load',run);var t=null;
+new MutationObserver(function(){clearTimeout(t);t=setTimeout(function(){try{fit()}catch(e){}},300)}).observe(document.documentElement,{childList:true,subtree:true});
+window.addEventListener('resize',function(){clearTimeout(t);t=setTimeout(run,300)});
+})();</script></body></html>

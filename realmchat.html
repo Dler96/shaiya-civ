@@ -1,0 +1,111 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Party Chat - The Living Realm</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b0d12;color:#e8e9ee;font:14px Segoe UI,system-ui,sans-serif}
+header{padding:14px 18px 6px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline}header a{color:#8fb4ff;text-decoration:none;font-size:13px}
+h1{margin:0;font-family:Georgia,serif;font-size:24px;background:linear-gradient(90deg,#8fb4ff,#f2e7c8 50%,#ff7a6a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:#9aa3b5;font-size:13px;padding:0 18px 10px}
+.tabs{display:flex;gap:6px;padding:0 18px 12px;flex-wrap:wrap}.tabs button{background:#161922;color:#cfd3dc;border:1px solid #303648;border-radius:20px;padding:7px 14px;font:inherit;cursor:pointer}
+.tabs button.on.L{border-color:#4f8cff;color:#8fb4ff;background:#132040}.tabs button.on.F{border-color:#ff5a4a;color:#ff8a7a;background:#3a1512}
+.union{margin:0 18px 14px;border-radius:12px;border:1px solid #303648;background:#10131b}
+.union h2{margin:0;padding:10px 14px;font-size:15px;border-bottom:1px solid #252a38}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;padding:0 18px 24px}
+.box{background:#10131b;border:1px solid #252a38;border-radius:12px;display:flex;flex-direction:column;height:330px;overflow:hidden}
+.box.L{border-top:3px solid #4f8cff}.box.F{border-top:3px solid #ff5a4a}.box.hot{box-shadow:0 0 0 1px #ff4a4a88}
+.hd{padding:9px 12px 6px;border-bottom:1px solid #20242f}.nm{font-weight:700}.st{float:right;font-size:11px;padding:2px 8px;border-radius:10px;background:#20242f;color:#c9cdd6;text-transform:uppercase;letter-spacing:.05em}
+.st.fight{background:#5a1a16;color:#ffb0a6}.st.retreat{background:#5a4416;color:#ffd58a}.st.rest{background:#173a25;color:#9be0b4}.st.assist,.st.bait,.st.hold{background:#2a2350;color:#c4b8ff}
+.mem{font-size:11.5px;color:#9aa3b5;margin-top:3px;line-height:1.5}.mem span.off{opacity:.4;text-decoration:line-through}
+.msgs{flex:1;overflow-y:auto;padding:8px 12px;display:flex;flex-direction:column;gap:5px}
+.m{font-size:13px;line-height:1.35}.m .t{color:#5f6779;font-size:11px;margin-right:5px}.m b{color:#f2e7c8}.m.call b{color:#ffcf6a}
+.union .msgs{height:170px}.empty{color:#5f6779;font-size:12px;font-style:italic}
+@media(max-width:700px){.grid{grid-template-columns:1fr;padding:0 10px 20px}.union{margin:0 10px 12px}header,.sub,.tabs{padding-left:10px;padding-right:10px}.box{height:290px}}
+</style></head><body>
+<header><a href="./" id="mn">Menu</a><a href="warcam.html" id="wc">War Cam</a><h1>Party Chat</h1></header>
+<div class="sub">The Living Realm, level-80 field. Every party's own chat, and each side's union channel. Updates live.</div>
+<div class="tabs"><button class="L on" data-s="0">Alliance of Light</button><button class="F" data-s="1">Union of Fury</button><button data-s="2">Both</button></div>
+<div id="un"></div><div class="grid" id="grid"></div>
+<script>
+const LOCAL=location.port==='8091'||location.hostname==='localhost'||location.hostname==='127.0.0.1';if(LOCAL){mn.href='/';wc.href='/warcam'}
+const J=['Fighter','Defender','Ranger','Archer','Mage','Priest'],IC=['&#9876;','&#128737;','&#128481;','&#127993;','&#10024;','&#10010;'];
+const MODE={fight:'fighting',retreat:'falling back',rest:'resting',assist:'helping',bait:'baiting',hold:'holding',hunt:'hunting',travel:'moving',regroup:'regrouping',boss:'boss!',march:'marching',guard:'holding ground'};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+let side=0,D=null,stick={};
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{side=+b.dataset.s;document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));draw()});
+const tm=t=>new Date(t*1000).toTimeString().slice(0,5);
+function msgs(L){if(!L.length)return'<div class="empty">Nothing said yet.</div>';return L.map(c=>`<div class="m ${c.call?'call':''}"><span class="t">${tm(c.t)}</span><b>${esc(c.who)}:</b> ${esc(c.text)}</div>`).join('')}
+function keepScroll(el,id,html){const s=stick[id]??true;el.innerHTML=html;if(s)el.scrollTop=el.scrollHeight;el.onscroll=()=>{stick[id]=el.scrollTop+el.clientHeight>=el.scrollHeight-20}}
+function draw(){if(!D)return;const sides=side===2?[0,1]:[side];
+ // union channels
+ let uh='';for(const s of sides){uh+=`<div class="union"><h2 class="${s?'F':'L'}" style="color:${s?'#ff8a7a':'#8fb4ff'}">${s?'Union of Fury':'Alliance of Light'}: union channel</h2><div class="msgs" id="u${s}"></div></div>`}
+ if(un.dataset.k!==String(side)){un.innerHTML=uh;un.dataset.k=side}
+ for(const s of sides)keepScroll(document.getElementById('u'+s),'u'+s,msgs(D.chat.filter(c=>c.k==='union'&&c.side===s).slice(-60)));
+ const SQ=D.squads.filter(q=>sides.includes(q.side)).sort((a,b)=>a.side-b.side||a.id-b.id);
+ if(grid.dataset.k!==String(side)+SQ.length){grid.innerHTML=SQ.map(q=>`<div class="box ${q.side?'F':'L'}" id="b${q.id}"><div class="hd"></div><div class="msgs" id="m${q.id}"></div></div>`).join('');grid.dataset.k=String(side)+SQ.length}
+ for(const q of SQ){const b=document.getElementById('b'+q.id);if(!b)continue;b.classList.toggle('hot',q.mode==='fight');
+  b.querySelector('.hd').innerHTML=`<span class="st ${q.mode}">${MODE[q.mode]||q.mode}</span><span class="nm">${esc(q.name)}</span> <span style="color:#6f7789;font-size:11px">${q.union?esc(q.union)+' · ':''}${q.style}s · ${q.n}/6 on</span>
+   <div class="mem">${q.members.map(m=>`<span class="${m[2]?'':'off'}" title="${J[m[1]]}">${IC[m[1]]} ${esc(m[0])}</span>`).join(' &nbsp;')}</div>`;
+  keepScroll(document.getElementById('m'+q.id),'m'+q.id,msgs(D.chat.filter(c=>c.k==='party'&&c.sq===q.id).slice(-60)))}}
+function load(){fetch(LOCAL?'/realmchat.json':'realmchat.json',{cache:'no-store'}).then(r=>r.json()).then(d=>{D=d;draw()}).catch(()=>{})}
+load();setInterval(load,3000);
+</script><a id="menubtn" href="index.html" style="position:fixed;right:14px;bottom:14px;z-index:99999;background:#151a28;border:1px solid #c9a54a;color:#f1dfa8;padding:8px 15px;border-radius:20px;font:600 14px Segoe UI,sans-serif;text-decoration:none;box-shadow:0 4px 14px rgba(0,0,0,.5)">&#9776; Menu</a><script>(function(){var H='index.html';function tag(){document.querySelectorAll('h1,h2').forEach(function(h){if(h.dataset.mb||h.closest('a,button,#menubtn,.no-menu'))return;h.dataset.mb=1;var a=document.createElement('a');a.href=H;a.className='secmenu';a.textContent='☰ Menu';h.appendChild(a)})}
+var s=document.createElement('style');s.textContent='.secmenu{display:inline-block;margin-left:12px;vertical-align:middle;font:600 11px Segoe UI,sans-serif;letter-spacing:.3px;color:#f1dfa8!important;background:#151a28;border:1px solid #c9a54a;border-radius:12px;padding:2px 9px;text-decoration:none!important;opacity:.75;text-transform:none}.secmenu:hover{opacity:1;background:#232a40}';document.head.appendChild(s);
+tag();var t=null;new MutationObserver(function(){clearTimeout(t);t=setTimeout(tag,150)}).observe(document.body,{childList:true,subtree:true})})();</script><style id="mfx">
+@media(max-width:760px){
+ body{overflow-wrap:break-word;-webkit-text-size-adjust:100%}
+ td,th{overflow-wrap:normal;word-break:normal}
+ img,video,canvas{max-width:100%;height:auto}
+ svg{max-width:100%;height:auto}
+ .mscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+ nav{flex-wrap:wrap;row-gap:6px}
+ .secmenu{display:none!important}
+ #menubtn,a[href][style*="position:fixed"][style*="bottom:14px"]{padding:6px 12px!important;font-size:13px!important;right:10px!important;bottom:10px!important}
+}
+.flpick{display:inline-flex;gap:6px;align-items:center;margin-left:auto}
+.flpick button,.flpick select{background:#20242f;color:#e8e9ee;border:1px solid #303648;border-radius:7px;padding:4px 8px;font:inherit;font-size:13px;cursor:pointer}
+.flpick button:disabled{opacity:.3;cursor:default}
+</style>
+<script>(function(){
+var W=function(){return window.innerWidth};
+function fit(){
+ if(W()>760)return;
+ document.querySelectorAll('table').forEach(function(t){
+  if(t.dataset.mw||t.closest('.mscroll'))return;var p=t.parentElement;if(!p)return;
+  var o=getComputedStyle(p).overflowX;if(o==='auto'||o==='scroll')return;
+  if(t.scrollWidth>p.clientWidth+2){var d=document.createElement('div');d.className='mscroll';p.insertBefore(d,t);d.appendChild(t);t.dataset.mw=1}});
+ document.querySelectorAll('body *').forEach(function(e){                       // grids squeezed into slivers: let them stack
+   if(e.closest('.mscroll,svg')||e.classList.contains('floors')||e.dataset.mg)return;
+   var cs=getComputedStyle(e);if(cs.display.indexOf('grid')<0)return;
+   var cols=cs.gridTemplateColumns.split(' ').filter(function(x){return x&&x!=='none'}).map(parseFloat);
+   if(cols.length<2)return;var mn=Math.min.apply(null,cols);
+   var heavy=e.querySelector('svg,table,canvas,img');
+   if(heavy&&mn<260){e.style.gridTemplateColumns='minmax(0,1fr)';e.dataset.mg=1}
+   else if(mn<110){e.style.gridTemplateColumns='repeat(auto-fit,minmax(min(100%,140px),1fr))';e.dataset.mg=1}});
+ for(var pass=0;pass<2;pass++){
+  document.querySelectorAll('body *').forEach(function(e){
+   if(e.closest('.mscroll,svg')||e.tagName==='TABLE'||e.tagName==='SCRIPT'||e.tagName==='STYLE')return;
+   var r=e.getBoundingClientRect();if(r.width<=W()+1)return;
+   var cs=getComputedStyle(e);
+   if(cs.position==='fixed')return;
+   if(cs.display.indexOf('grid')>=0)e.style.gridTemplateColumns='repeat(auto-fit,minmax(min(100%,150px),1fr))';
+   else if(cs.display.indexOf('flex')>=0)e.style.flexWrap='wrap';
+   if(e.tagName==='svg'||e.tagName==='SVG'){e.style.width='100%';e.style.height='auto'}
+   else{e.style.maxWidth='100%';e.style.minWidth='0';e.style.boxSizing='border-box'}});
+ }}
+function floors(){
+ var m=location.pathname.match(/\/floor\/(\d\d)\/([^\/]*)$/);
+ if(!m||document.getElementById('flsel')||document.querySelector('.flpick'))return;
+ var n=+m[1],page=m[2]||'',pad=function(k){return(k<10?'0':'')+k};
+ var s=document.createElement('span');s.className='flpick';
+ var o='';for(var k=1;k<=20;k++)o+='<option value="'+k+'"'+(k===n?' selected':'')+'>Floor '+k+'</option>';
+ s.innerHTML='<button aria-label="Previous floor"'+(n<=1?' disabled':'')+'>&larr;</button><select aria-label="Choose a floor">'+o+'</select><button aria-label="Next floor"'+(n>=20?' disabled':'')+'>&rarr;</button>';
+ var go=function(k){location.href='../'+pad(k)+'/'+page};
+ var b=s.querySelectorAll('button');b[0].onclick=function(){go(n-1)};b[1].onclick=function(){go(n+1)};s.querySelector('select').onchange=function(){go(+this.value)};
+ var nav=document.querySelector('nav');
+ if(nav){nav.style.display=nav.style.display||'flex';nav.style.flexWrap='wrap';nav.style.alignItems='center';nav.appendChild(s)}
+ else{var h=document.querySelector('h1');if(h)h.parentElement.insertBefore(s,h.nextSibling)}}
+function run(){try{floors()}catch(e){}try{fit()}catch(e){}}
+if(document.readyState!=='loading')run();else document.addEventListener('DOMContentLoaded',run);
+window.addEventListener('load',run);var t=null;
+new MutationObserver(function(){clearTimeout(t);t=setTimeout(function(){try{fit()}catch(e){}},300)}).observe(document.documentElement,{childList:true,subtree:true});
+window.addEventListener('resize',function(){clearTimeout(t);t=setTimeout(run,300)});
+})();</script></body></html>
